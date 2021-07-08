@@ -5,6 +5,17 @@ const { extend } = require("lodash")
 
 const { User } = require("../models/user-model")
 
+router.route("/")
+.get(async(req, res) => {
+    try {
+        const users = await User.find({})
+        res.json({success: true, message: "All users fetched", data: users})
+    } catch (err) {
+        console.log("Error fetching all users")
+        res.json({success: false, message: "Error fetching all users", errMessage: err.message})
+    }
+})
+
 router.param("userId", async(req, res, next, userId) => {
     try {
         const user = await User.findById(userId);
