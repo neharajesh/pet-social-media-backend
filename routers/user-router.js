@@ -2,6 +2,7 @@
 const express = require("express")
 const router = express()
 const { extend } = require("lodash")
+const mongoose = require("mongoose")
 
 const { User } = require("../models/user-model")
 
@@ -42,10 +43,10 @@ router.route("/:userId")
 .post(async(req, res) => {
     try {
         let { user } = req
-        if(req.body.userId !== user._id) {
+        if(req.body.userId !== user._id.toString()) {
             return res.json({success: false, message: "Can only update your account"})
         }
-        let userUpdates = req.body
+        let userUpdates = req.body.updates
         user = extend(user, userUpdates)
         user = await user.save()
         res.json({success: true, message: "User details updated successfully", data: user})
@@ -74,11 +75,12 @@ router.route("/:userId")
 router.route("/:userId/follow")
 .post(async(req, res) => {
     let { user } = req;
+    let receivedId = mongoose.Types.ObjectId(req.body.userId)
     try {
-        if(user._id === req.body.userId) {
+        if(user._id === receivedId) {
             return res.json({success: false, message: "Cannot follow yourself"})
         }
-        let userToFollow = await User.findById(req.body.userId)
+        let userToFollow = await User.findById(receivedId)
         if(user.followers.includes(userToFollow._id)) {
             return res.json({success: false, message: "Already following user"})
         } else {
