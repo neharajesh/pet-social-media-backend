@@ -8,7 +8,7 @@ router.route("/")
 //get all posts
 .get(async(req, res) => {
     try {
-        const posts = await Post.find({})
+        const posts = await Post.find({}).sort('-createdAt')
         res.json({success: true, message: "Posts retrieved successfully", sentData: posts})
     } catch (err) {
         console.log("Error retrieving posts", err.message)
@@ -88,11 +88,13 @@ router.route("/:postId/like")
         let { post } = req
         let currentUser = req.body.userId
         if( post.likes.includes(currentUser) ) {
-            await post.updateOne({ $push: { likes: currentUser }})
-            return res.json({ success: true, message: "Post has been liked", data: post})
+            await post.updateOne({ $pull: {likes: currentUser} })
+            const updatedPost = await Post.findById(post._id)
+            return res.json({ success: true, message: "Post has been disliked", data: updatedPost})
         } else {
-            await post.updateOne( { $pull: {likes: currentUser} })
-            return res.json({ success: true, message: "Post has been disliked", data: post})
+            await post.updateOne({ $push: { likes: currentUser }})
+            const updatedPost = await Post.findById(post._id)
+            return res.json({ success: true, message: "Post has been liked", data: updatedPost})
         }
     } catch (err) {
         console.log("Error occurred while liking/disliking post")
@@ -108,7 +110,8 @@ router.route("/:postId/comment")
         let { post } = req
         let newComment = { comment: req.body.comment, user: req.body.userId }
         await post.updateOne({ $push: {comments: newComment}})
-        return res.json({success: true, message: "Comment added", data: post})
+        const updatedPost = await Post.findById(post._id)
+        return res.json({success: true, message: "Comment added", data: updatedPost})
     } catch (err) {
         console.log("Error occurred while commenting on post")
         res.json({ success: false, message: "Comment could not be added", errMessage: err.message})
