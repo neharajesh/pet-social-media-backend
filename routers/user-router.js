@@ -3,6 +3,7 @@ const express = require("express")
 const router = express()
 const { extend } = require("lodash")
 const mongoose = require("mongoose")
+const bcrypt = require("bcryptjs");
 
 const { User } = require("../models/user-model")
 
@@ -47,8 +48,12 @@ router.route("/:userId")
             return res.json({success: false, message: "Can only update your account"})
         }
         let userUpdates = req.body.updates
+        if(userUpdates.password) {
+            userUpdates = {...userUpdates, password: bcrypt.hashSync(userUpdates.password, 8)}
+        }
         user = extend(user, userUpdates)
         user = await user.save()
+        console.log(user)
         res.json({success: true, message: "User details updated successfully", data: user})
     } catch (err) {
         console.log("Error occurred while trying to update user details")
